@@ -8,12 +8,23 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Register user
+// @desc    Register user (Student/Admin)
 // @route   POST /api/auth/register
 // @access  Public
 const register = async (req, res) => {
   try {
-    const { username, email, password, firstName, lastName } = req.body;
+    const {
+      username,
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      college,
+      YearOfGraduation,
+      fieldOfStudy,
+      role
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -29,17 +40,37 @@ const register = async (req, res) => {
       }
     }
 
+    // Default role = student
+    let assignedRole = "student";
+
+    // Allow admin if registering with special email OR explicit role
+    if (email === process.env.ADMIN_EMAIL || role === "admin") {
+      assignedRole = "admin";
+    }
+
     // Create user
     const user = await User.create({
       username,
       email,
       password,
       firstName,
-      lastName
+      lastName,
+      phone,
+      college,
+      YearOfGraduation,
+      fieldOfStudy,
+      role: assignedRole
     });
 
     // Generate token
     const token = generateToken(user._id);
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+      maxAge: 7*24*60*60*1000 
+    });
 
     // Update last login
     await user.updateLastLogin();
@@ -54,7 +85,7 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
@@ -67,7 +98,7 @@ const register = async (req, res) => {
   }
 };
 
-// @desc    Login user
+// @desc    Login user (Student/Admin)
 // @route   POST /api/auth/login
 // @access  Public
 const login = async (req, res) => {
@@ -76,7 +107,7 @@ const login = async (req, res) => {
 
     // Check if user exists and password is correct
     const user = await User.findOne({ email }).select('+password');
-    
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -86,13 +117,20 @@ const login = async (req, res) => {
     }
 
     const isMatch = await user.comparePassword(password);
-    
+
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate token
     const token = generateToken(user._id);
+
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        maxAge: 7*24*60*60*1000 
+    });
 
     // Update last login
     await user.updateLastLogin();
@@ -117,7 +155,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     res.json({
       success: true,
       data: {
@@ -136,7 +174,7 @@ const getMe = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    
+
     if (!user || !user.isActive) {
       return res.status(401).json({ message: 'User not found or inactive' });
     }
@@ -163,8 +201,13 @@ const refreshToken = async (req, res) => {
 // @access  Private
 const logout = async (req, res) => {
   try {
-    // In a stateless JWT system, logout is handled client-side
-    // But we can log the logout event if needed
+
+     res.clearCookie('token',{
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+      });
+
     res.json({
       success: true,
       message: 'Logged out successfully'
@@ -183,7 +226,7 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -195,13 +238,11 @@ const forgotPassword = async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Save reset token to user
+    // Save reset token
     user.passwordResetToken = resetToken;
     user.passwordResetExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    // In a real application, you would send this token via email
-    // For now, we'll just return it (remove this in production)
     res.json({
       success: true,
       message: 'Password reset email sent',
@@ -228,9 +269,9 @@ const resetPassword = async (req, res) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     const user = await User.findById(decoded.id);
-    
+
     if (!user) {
       return res.status(400).json({ message: 'Invalid token' });
     }
@@ -251,11 +292,11 @@ const resetPassword = async (req, res) => {
     });
   } catch (error) {
     console.error('Reset password error:', error);
-    
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(400).json({ message: 'Invalid token' });
     }
-    
+
     if (error.name === 'TokenExpiredError') {
       return res.status(400).json({ message: 'Token has expired' });
     }
@@ -273,4 +314,3 @@ module.exports = {
   forgotPassword,
   resetPassword
 };
-

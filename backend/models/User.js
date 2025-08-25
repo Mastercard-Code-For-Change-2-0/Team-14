@@ -1,80 +1,106 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: [true, 'Username is required'],
-    unique: true,
-    trim: true,
-    minlength: [3, 'Username must be at least 3 characters long'],
-    maxlength: [30, 'Username cannot exceed 30 characters']
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: [true, "Username is required"],
+      unique: true,
+      trim: true,
+      minlength: [3, "Username must be at least 3 characters long"],
+      maxlength: [30, "Username cannot exceed 30 characters"],
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        "Please enter a valid email",
+      ],
+    },
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters long"],
+      select: false, // exclude by default
+    },
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [50, "First name cannot exceed 50 characters"],
+    },
+    lastName: {
+      type: String,
+      trim: true,
+      required: true,
+      maxlength: [50, "Last name cannot exceed 50 characters"],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+      match: [/^\d{10}$/, "Phone number must be exactly 10 digits"],
+    },
+    college: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    YearOfGraduation: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    fieldOfStudy: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: [
+        "B.Tech - Computer Engineering",
+        "B.Tech - Information Technology",
+        "B.Tech - Electronics & Telecommunication Engineering",
+        "B.Tech - Electronics & Computer Engineering",
+        "B.Tech - Mechanical Engineering",
+      ],
+    },
+    role: {
+      type: String,
+      enum: ["student", "admin"],
+      default: "student",
+    },
+    lastLogin: {
+      type: Date,
+    },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
-  },
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters long'],
-    select: false
-  },
-  firstName: {
-    type: String,
-    trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
-  },
-  lastName: {
-    type: String,
-    trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
-  },
-  avatar: {
-    type: String,
-    default: ''
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  lastLogin: {
-    type: Date
-  },
-  emailVerified: {
-    type: Boolean,
-    default: false
-  },
-  emailVerificationToken: String,
-  emailVerificationExpires: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
-// Index for better query performance
+// Indexes for faster queries
 userSchema.index({ email: 1 });
 userSchema.index({ username: 1 });
 
-// Virtual for full name
-userSchema.virtual('fullName').get(function() {
-  return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+// Virtual fullName field
+userSchema.virtual("fullName").get(function () {
+  return `${this.firstName || ""} ${this.lastName || ""}`.trim();
 });
 
-// Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
+// Pre-save hook to hash password
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
@@ -84,31 +110,34 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw new Error('Password comparison failed');
-  }
+// Compare password
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to get public profile (without sensitive data)
-userSchema.methods.getPublicProfile = function() {
-  const userObject = this.toObject();
-  delete userObject.password;
-  delete userObject.emailVerificationToken;
-  delete userObject.emailVerificationExpires;
-  delete userObject.passwordResetToken;
-  delete userObject.passwordResetExpires;
-  return userObject;
+// Public profile (safe version)
+userSchema.methods.getPublicProfile = function () {
+  const { _id, username, email, firstName, lastName, role, phone, college, YearOfGraduation, fieldOfStudy, isActive } =
+    this;
+  return {
+    id: _id,
+    username,
+    email,
+    firstName,
+    lastName,
+    role,
+    phone,
+    college,
+    YearOfGraduation,
+    fieldOfStudy,
+    isActive,
+  };
 };
 
-// Method to update last login
-userSchema.methods.updateLastLogin = function() {
+// Update last login
+userSchema.methods.updateLastLogin = function () {
   this.lastLogin = new Date();
   return this.save();
 };
 
-module.exports = mongoose.model('User', userSchema);
-
+module.exports = mongoose.model("User", userSchema);

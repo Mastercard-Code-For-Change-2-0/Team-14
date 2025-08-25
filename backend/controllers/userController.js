@@ -24,7 +24,7 @@ const getProfile = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { username, firstName, lastName, avatar } = req.body;
+    const { username, firstName, lastName, phone } = req.body;
     
     // Check if username is being changed and if it's already taken
     if (username && username !== req.user.username) {
@@ -40,7 +40,7 @@ const updateProfile = async (req, res) => {
         username: username || req.user.username,
         firstName: firstName !== undefined ? firstName : req.user.firstName,
         lastName: lastName !== undefined ? lastName : req.user.lastName,
-        avatar: avatar !== undefined ? avatar : req.user.avatar
+        phone: phone !== undefined ? phone : req.user.phone
       },
       { new: true, runValidators: true }
     );
@@ -165,7 +165,7 @@ const searchUsers = async (req, res) => {
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
-      select: 'username firstName lastName avatar createdAt'
+      select: 'username firstName lastName createdAt'
     };
 
     const users = await User.paginate(searchQuery, options);
@@ -272,7 +272,7 @@ const updateUserRole = async (req, res) => {
     const { role } = req.body;
     const { id } = req.params;
 
-    if (!['user', 'admin'].includes(role)) {
+    if (!['student', 'admin'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
 

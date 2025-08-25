@@ -12,7 +12,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = ["Home", "About Us", "Our Work", "Get Involved", "Contact"];
+  const navLinks = ["Home", "About Us", "Our Work", "Get Involved", "Contact", "Events"];
 
   return (
     <motion.header
@@ -28,25 +28,49 @@ const Header = () => {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center space-x-10">
-          {navLinks.map((link) => (
-            <motion.a
-              key={link}
-              href={`#${link.toLowerCase().replace(" ", "-")}`}
-              className="text-lg text-white font-medium relative"
-              whileHover="hover"
-            >
-              {link}
-              <motion.div
-                className="absolute bottom-[-6px] left-0 right-0 h-0.5 bg-teal-400"
-                variants={{
-                  initial: { scaleX: 0 },
-                  hover: { scaleX: 1 },
-                }}
-                initial="initial"
-                transition={{ duration: 0.3 }}
-              />
-            </motion.a>
-          ))}
+          {navLinks.map((link) => {
+            if (link === "Home") {
+              return (
+                <Link
+                  key={link}
+                  to="/"
+                  className="text-lg text-white font-medium relative"
+                >
+                  {link}
+                </Link>
+              );
+            }
+            if (link === "Events") {
+              return (
+                <Link
+                  key={link}
+                  to="/events"
+                  className="text-lg text-white font-medium relative"
+                >
+                  {link}
+                </Link>
+              );
+            }
+            return (
+              <motion.a
+                key={link}
+                href={`#${link.toLowerCase().replace(" ", "-")}`}
+                className="text-lg text-white font-medium relative"
+                whileHover="hover"
+              >
+                {link}
+                <motion.div
+                  className="absolute bottom-[-6px] left-0 right-0 h-0.5 bg-teal-400"
+                  variants={{
+                    initial: { scaleX: 0 },
+                    hover: { scaleX: 1 },
+                  }}
+                  initial="initial"
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.a>
+            );
+          })}
         </nav>
 
         {/* Desktop Profile Button */}
@@ -106,16 +130,42 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -30 }}
           >
-            {navLinks.map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase().replace(" ", "-")}`}
-                className="block text-lg font-medium hover:text-teal-400"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              if (link === "Home") {
+                return (
+                  <Link
+                    key={link}
+                    to="/"
+                    className="block text-lg font-medium hover:text-teal-400"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link}
+                  </Link>
+                );
+              }
+              if (link === "Events") {
+                return (
+                  <Link
+                    key={link}
+                    to="/events"
+                    className="block text-lg font-medium hover:text-teal-400"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link}
+                  </Link>
+                );
+              }
+              return (
+                <a
+                  key={link}
+                  href={`#${link.toLowerCase().replace(" ", "-")}`}
+                  className="block text-lg font-medium hover:text-teal-400"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link}
+                </a>
+              );
+            })}
             {/* Mobile Profile Button */}
             <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
               <motion.button

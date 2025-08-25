@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff,FiPhone } from 'react-icons/fi';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const Register = () => {
@@ -11,7 +11,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -21,19 +21,23 @@ const Register = () => {
 
   const password = watch('password');
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const result = await registerUser(data);
-      if (result.success) {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-    } finally {
-      setIsLoading(false);
+ const onSubmit = async (data) => {
+  setIsLoading(true);
+  try {
+    // Remove confirmPassword before sending to backend
+    const { confirmPassword, ...payload } = data;
+
+    const result = await registerUser(payload);
+    if (result.success) {
+      navigate('/dashboard');
     }
-  };
+  } catch (error) {
+    console.error('Registration error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
   const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
@@ -50,195 +54,185 @@ const Register = () => {
 
         <div className="card">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            
+            {/* First + Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div className="form-group">
-                <label htmlFor="firstName" className="form-label">
-                  First Name
-                </label>
+                <label className="form-label">First Name</label>
                 <input
-                  id="firstName"
                   type="text"
-                  autoComplete="given-name"
                   className={`input ${errors.firstName ? 'border-red-500' : ''}`}
                   placeholder="First name"
                   {...register('firstName', {
-                    maxLength: {
-                      value: 50,
-                      message: 'First name cannot exceed 50 characters'
-                    }
+                    required: 'First name is required',
+                    maxLength: { value: 50, message: 'Max 50 chars' }
                   })}
                 />
-                {errors.firstName && (
-                  <p className="form-error">{errors.firstName.message}</p>
-                )}
+                {errors.firstName && <p className="form-error">{errors.firstName.message}</p>}
               </div>
 
               <div className="form-group">
-                <label htmlFor="lastName" className="form-label">
-                  Last Name
-                </label>
+                <label className="form-label">Last Name</label>
                 <input
-                  id="lastName"
                   type="text"
-                  autoComplete="family-name"
                   className={`input ${errors.lastName ? 'border-red-500' : ''}`}
                   placeholder="Last name"
                   {...register('lastName', {
-                    maxLength: {
-                      value: 50,
-                      message: 'Last name cannot exceed 50 characters'
-                    }
+                    required: 'Last name is required',
+                    maxLength: { value: 50, message: 'Max 50 chars' }
                   })}
                 />
-                {errors.lastName && (
-                  <p className="form-error">{errors.lastName.message}</p>
-                )}
+                {errors.lastName && <p className="form-error">{errors.lastName.message}</p>}
               </div>
             </div>
 
+            {/* Username */}
             <div className="form-group">
-              <label htmlFor="username" className="form-label">
-                Username
-              </label>
+              <label className="form-label">Username</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiUser className="h-5 w-5 text-gray-400" />
-                </div>
+                <FiUser className="absolute left-3 top-3 text-gray-400" />
                 <input
-                  id="username"
                   type="text"
-                  autoComplete="username"
                   className={`input pl-10 ${errors.username ? 'border-red-500' : ''}`}
                   placeholder="Choose a username"
                   {...register('username', {
                     required: 'Username is required',
-                    minLength: {
-                      value: 3,
-                      message: 'Username must be at least 3 characters long'
-                    },
-                    maxLength: {
-                      value: 30,
-                      message: 'Username cannot exceed 30 characters'
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9_]+$/,
-                      message: 'Username can only contain letters, numbers, and underscores'
-                    }
+                    minLength: { value: 3, message: 'Min 3 characters' },
+                    maxLength: { value: 30, message: 'Max 30 characters' }
                   })}
                 />
               </div>
-              {errors.username && (
-                <p className="form-error">{errors.username.message}</p>
-              )}
+              {errors.username && <p className="form-error">{errors.username.message}</p>}
             </div>
 
+            {/* Email */}
             <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                Email address
-              </label>
+              <label className="form-label">Email</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiMail className="h-5 w-5 text-gray-400" />
-                </div>
+                <FiMail className="absolute left-3 top-3 text-gray-400" />
                 <input
-                  id="email"
                   type="email"
-                  autoComplete="email"
                   className={`input pl-10 ${errors.email ? 'border-red-500' : ''}`}
                   placeholder="Enter your email"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: 'Invalid email format'
                     }
                   })}
                 />
               </div>
-              {errors.email && (
-                <p className="form-error">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="form-error">{errors.email.message}</p>}
             </div>
 
+            {/* Phone */}
             <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
+              <label className="form-label">Phone</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock className="h-5 w-5 text-gray-400" />
-                </div>
+                <FiPhone className="absolute left-3 top-3 text-gray-400" />
                 <input
-                  id="password"
+                  type="text"
+                  className={`input pl-10 ${errors.phone ? 'border-red-500' : ''}`}
+                  placeholder="10-digit phone number"
+                  {...register('phone', {
+                    required: 'Phone number is required',
+                    pattern: { value: /^\d{10}$/, message: 'Must be 10 digits' }
+                  })}
+                />
+              </div>
+              {errors.phone && <p className="form-error">{errors.phone.message}</p>}
+            </div>
+
+            {/* College */}
+            <div className="form-group">
+              <label className="form-label">College</label>
+              <input
+                type="text"
+                className={`input ${errors.college ? 'border-red-500' : ''}`}
+                placeholder="Enter your college"
+                {...register('college', { required: 'College is required' })}
+              />
+              {errors.college && <p className="form-error">{errors.college.message}</p>}
+            </div>
+
+            {/* Year of Graduation */}
+            <div className="form-group">
+              <label className="form-label">Year of Graduation</label>
+              <input
+                type="text"
+                className={`input ${errors.YearOfGraduation ? 'border-red-500' : ''}`}
+                placeholder="YYYY"
+                {...register('YearOfGraduation', {
+                  required: 'Graduation year is required',
+                  pattern: { value: /^\d{4}$/, message: 'Enter valid year' }
+                })}
+              />
+              {errors.YearOfGraduation && <p className="form-error">{errors.YearOfGraduation.message}</p>}
+            </div>
+
+            {/* Field of Study */}
+            <div className="form-group">
+              <label className="form-label">Field of Study</label>
+              <select
+                className={`input ${errors.fieldOfStudy ? 'border-red-500' : ''}`}
+                {...register('fieldOfStudy', { required: 'Field of study is required' })}
+              >
+                <option value="">Select your field</option>
+                <option>B.Tech - Computer Engineering</option>
+                <option>B.Tech - Information Technology</option>
+                <option>B.Tech - Electronics & Telecommunication Engineering</option>
+                <option>B.Tech - Electronics & Computer Engineering</option>
+                <option>B.Tech - Mechanical Engineering</option>
+              </select>
+              {errors.fieldOfStudy && <p className="form-error">{errors.fieldOfStudy.message}</p>}
+            </div>
+
+            {/* Password */}
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <div className="relative">
+                <FiLock className="absolute left-3 top-3 text-gray-400" />
+                <input
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
                   className={`input pl-10 pr-10 ${errors.password ? 'border-red-500' : ''}`}
                   placeholder="Create a password"
                   {...register('password', {
                     required: 'Password is required',
-                    minLength: {
-                      value: 6,
-                      message: 'Password must be at least 6 characters long'
-                    },
-                    pattern: {
-                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                      message: 'Password must contain at least one lowercase letter, one uppercase letter, and one number'
-                    }
+                    minLength: { value: 6, message: 'Min 6 characters' }
                   })}
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? (
-                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center">
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="form-error">{errors.password.message}</p>
-              )}
+              {errors.password && <p className="form-error">{errors.password.message}</p>}
             </div>
 
+            {/* Confirm Password */}
             <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">
-                Confirm Password
-              </label>
+              <label className="form-label">Confirm Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock className="h-5 w-5 text-gray-400" />
-                </div>
+                <FiLock className="absolute left-3 top-3 text-gray-400" />
                 <input
-                  id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
                   className={`input pl-10 pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                  placeholder="Confirm your password"
+                  placeholder="Confirm password"
                   {...register('confirmPassword', {
-                    required: 'Please confirm your password',
+                    required: 'Confirm password is required',
                     validate: value => value === password || 'Passwords do not match'
                   })}
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={toggleConfirmPasswordVisibility}
-                >
-                  {showConfirmPassword ? (
-                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center">
+                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="form-error">{errors.confirmPassword.message}</p>
-              )}
+              {errors.confirmPassword && <p className="form-error">{errors.confirmPassword.message}</p>}
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
@@ -257,14 +251,12 @@ const Register = () => {
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link
-                  to="/login"
-                  className="font-medium text-primary-600 hover:text-primary-500"
-                >
+                <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
                   Sign in
                 </Link>
               </p>
             </div>
+
           </form>
         </div>
       </div>
@@ -273,4 +265,3 @@ const Register = () => {
 };
 
 export default Register;
-

@@ -64,24 +64,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
-  const register = async (userData) => {
-    try {
-      const response = await axios.post('/api/auth/register', userData);
-      const { user: newUser, token: userToken } = response.data.data;
-      
-      setUser(newUser);
-      setToken(userToken);
-      localStorage.setItem('token', userToken);
-      
-      toast.success('Registration successful!');
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
-      return { success: false, message };
-    }
-  };
+const register = async (userData) => {
+  try {
+    const payload = {
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      phone: userData.phone,
+      college: userData.college,
+      YearOfGraduation: userData.YearOfGraduation,
+      fieldOfStudy: userData.fieldOfStudy,
+    };
+
+    console.log("📤 Register payload being sent:", payload); // 👈 Add this
+
+    const response = await axios.post('http://localhost:5000/api/auth/register', payload);
+    const { user: newUser, token: userToken } = response.data.data;
+
+    setUser(newUser);
+    setToken(userToken);
+    localStorage.setItem('token', userToken);
+
+    toast.success('Registration successful!');
+    return { success: true };
+  } catch (error) {
+    const message = error.response?.data?.message || 'Registration failed';
+    toast.error(message);
+    return { success: false, message };
+  }
+};
+
+
 
   // Logout function
   const logout = async () => {

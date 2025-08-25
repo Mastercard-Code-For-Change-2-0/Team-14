@@ -5,10 +5,16 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+const cookieParser = require('cookie-parser');
+const app = express();
+app.use(cookieParser());
+
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const adminRoutes = require('./routes/admin');
+const eventRoutes = require('./routes/event');
 
-const app = express();
+
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
@@ -34,6 +40,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/event', eventRoutes);
+
+
 
 // Health check route
 app.get('/api/health', (req, res) => {
